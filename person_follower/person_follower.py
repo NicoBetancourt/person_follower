@@ -38,13 +38,32 @@ class PersonFollower(Node):
         #
         # your code for computing vx, wz
         #
-        np_ranges = np.array(ranges)
 
-        min_index = np.argmin(np_ranges)
-        min_value = np.min(np_ranges)
-        print(min_index, min_value)
-        vx = 0.1
-        wz = 0.1 #pos izq, neg der
+        def follow_target(np_ranges, target_angle=180):
+            min_index = np.argmin(np_ranges)
+            min_value = np.min(np_ranges)
+
+            # Calcular el error (Pos está a la izquierda/ Neg está a la derecha)
+            error_angle = target_angle - min_index
+            
+            # Control proporcional para ajustar las velocidades lineal y angular
+            if (-90 <= error_angle <= 90):
+                angular_velocity = 0.2*(error_angle/90) 
+                linear_velocity = 0.2*min_value/2.5
+            else:
+                linear_velocity  = 0.
+                angular_velocity = 0.                 
+
+            print("Ángulo:", min_index, "Distancia:", round(min_value, 3), "Vel Lin:", round(linear_velocity, 4), "Vel Ang:", round(angular_velocity, 4))
+
+            return linear_velocity, angular_velocity
+
+        np_ranges = np.array(ranges)
+        
+        linear_velocity, angular_velocity = follow_target(np_ranges)
+
+        vx = linear_velocity #0.1
+        wz = angular_velocity #0.1 #pos izq, neg der
         #
         output_msg = Twist()
         output_msg.linear.x = vx
