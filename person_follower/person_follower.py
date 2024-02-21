@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import numpy as np
 import rclpy
 from rclpy.node import Node
 
@@ -38,8 +38,13 @@ class PersonFollower(Node):
         #
         # your code for computing vx, wz
         #
-        vx = 0.
-        wz = 0.
+        np_ranges = np.array(ranges)
+
+        min_index = np.argmin(np_ranges)
+        min_value = np.min(np_ranges)
+        print(min_index, min_value)
+        vx = 0.1
+        wz = 0.1 #pos izq, neg der
         #
         output_msg = Twist()
         output_msg.linear.x = vx
