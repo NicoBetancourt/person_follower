@@ -15,7 +15,7 @@ mkdir -p ~/ros2_ws/src
 3. Clone this repository and build the package
 ```
 cd ~/ros2_ws/src
-git clone https://github.com/RobInLabUJI/person_follower.git
+git clone https://github.com/NicoBetancourt/person_follower.git
 cd ..
 source /opt/ros/foxy/setup.bash
 colcon build --symlink-install
