@@ -112,3 +112,10 @@ source /opt/ros/foxy/setup.bash
 export ROS_DOMAIN_ID=2X
 rviz2 -d tb2.rviz
 ```
+7. To run the person follower in the bot
+```
+source /opt/ros/foxy/setup.bash
+source ~/ros2_ws/install/setup.bash
+export ROS_DOMAIN_ID=2X
+ros2 run person_follower person_follower --ros-args -r cmd_vel:=/commands/velocity
+```
