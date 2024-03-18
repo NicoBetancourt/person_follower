@@ -35,11 +35,8 @@ class PersonFollower(Node):
         angle_max = input_msg.angle_max
         angle_increment = input_msg.angle_increment
         ranges = input_msg.ranges
-        #
-        # your code for computing vx, wz
-        #
 
-        def follow_target(np_ranges, target_angle=180):
+        def follow_target(np_ranges, target_angle):
             min_index = np.argmin(np_ranges)
             min_value = np.min(np_ranges)
 
@@ -47,25 +44,27 @@ class PersonFollower(Node):
             error_angle = target_angle - min_index
             
             # Control proporcional para ajustar las velocidades lineal y angular
-            if abs(error_angle) <= 35 and min_value <=1.5:
-                if abs(error_angle) <= 20:
+            if abs(error_angle) <= 30*3 and min_value <= 2:
+                if abs(error_angle) <= 15*3:
                     angular_velocity = 0.2*(error_angle/90)
-                    linear_velocity = (1 - np.exp(-0.693 * min_value))/2.4
+                    linear_velocity = (1 - np.exp(-0.7 * min_value))/2.4
                 else:
                     angular_velocity = 2.5*(error_angle/90)
-                    linear_velocity = (1 - np.exp(-0.693 * min_value))/3.2
+                    linear_velocity = (1 - np.exp(-0.7 * min_value))/3.2
             else:
                 linear_velocity  = 0.
                 angular_velocity = 0.                 
 
-            # print("Ángulo:", min_index, "Distancia:", round(min_value, 3), "Vel Lin:", round(linear_velocity, 4), "Vel Ang:", round(angular_velocity, 4))
-            print("error_angle:", round(error_angle, 3),"min_index:", round(min_index, 3),"min_value:", round(min_value, 3),"target_angle:", round(target_angle, 3))
+            print("Ángulo:", round(min_index/3,1), "Distancia:", round(min_value, 3), "Vel Lin:", round(linear_velocity, 4), "Vel Ang:", round(angular_velocity, 4))
 
             return linear_velocity, angular_velocity
-        target_value = 180
-        margin_value = 35
+
+        margin_value = 30*3
+        target_value = 180*3
+
         np_ranges = np.array(ranges)
-        np_ranges = np_ranges[target_value - margin_value:target_value + margin_value+1]
+        np_ranges = np.roll(np_ranges, margin_value)[:margin_value * 2]
+        # np_ranges = np_ranges[target_value - margin_value:target_value + margin_value+1]
         linear_velocity, angular_velocity = follow_target(np_ranges,len(np_ranges)/2)
 
         vx = linear_velocity #0.1
@@ -73,7 +72,7 @@ class PersonFollower(Node):
         #
         output_msg = Twist()
         output_msg.linear.x = vx
-        output_msg.angular.z = wz
+        output_msg.angular.z = -wz
         self.publisher_.publish(output_msg)
 
 def main(args=None):
