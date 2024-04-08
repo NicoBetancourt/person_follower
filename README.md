@@ -61,6 +61,8 @@ rviz2 -d ~/ros2_ws/src/person_follower/webots/config.rviz
 
 ## Bot execution
 
+Connect to the network PIROBONET
+
 Power on
 
 - Turn on the switch on the Kobuki base
@@ -81,20 +83,23 @@ Power off
 1. Run in the terminal
 
 ```
-ssh user@192.168.0.22X
+ssh user@192.168.0.224
 ```
+password : "qwerty"
+
+
 2. Run in the ssh terminal
 
 ```
 source /opt/ros/foxy/setup.bash
 source ros2_ws/install/setup.bash
-export ROS_DOMAIN_ID=2X
+export ROS_DOMAIN_ID=24
 ros2 launch kobuki_node kobuki_node-launch.py 
 ```
 3. To operate manually the bot
 ```
 source /opt/ros/foxy/setup.bash
-export ROS_DOMAIN_ID=2X
+export ROS_DOMAIN_ID=24
 ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/commands/velocity
 ```
 
@@ -102,21 +107,23 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/com
 
 In an ssh terminal execute the commands:
 ```
+ssh user@192.168.0.224
 source /opt/ros/foxy/setup.bash
 source ros2_ws/install/setup.bash
-export ROS_DOMAIN_ID=2X
+export ROS_DOMAIN_ID=24
 ros2 launch rplidar_ros rplidar_a2m8_launch.py serial_port:=/dev/rplidar
 ```
 The Lidar should start to turn. In another ssh terminal execute the commands:
 ```
+ssh user@192.168.0.224
 source /opt/ros/foxy/setup.bash
-export ROS_DOMAIN_ID=2X
+export ROS_DOMAIN_ID=24
 ros2 run tf2_ros static_transform_publisher 0 0 0 3.141592 0 0 base_footprint laser
 ```
 5. To check the scan topic from a terminal
 ```
 source /opt/ros/foxy/setup.bash
-export ROS_DOMAIN_ID=2X
+export ROS_DOMAIN_ID=24
 ros2 topic hz /scan
 ```
 6. To visualize the bot
@@ -126,13 +133,13 @@ Download the next file and run in the same folder:
 [tb2.rviz](https://aulavirtual.uji.es/pluginfile.php/6837268/mod_resource/content/1/tb2.rviz)
 ```
 source /opt/ros/foxy/setup.bash
-export ROS_DOMAIN_ID=2X
+export ROS_DOMAIN_ID=24
 rviz2 -d tb2.rviz
 ```
 7. To run the person follower in the bot
 ```
 source /opt/ros/foxy/setup.bash
 source ~/ros2_ws/install/setup.bash
-export ROS_DOMAIN_ID=2X
+export ROS_DOMAIN_ID=24
 ros2 run person_follower person_follower --ros-args -r cmd_vel:=/commands/velocity
 ```
