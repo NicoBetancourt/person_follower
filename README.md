@@ -61,6 +61,23 @@ rviz2 -d ~/ros2_ws/src/person_follower/webots/config.rviz
 
 ## Bot execution
 
+Power on
+
+- Turn on the switch on the Kobuki base
+- Turn on the external battery pack
+- Set the voltage of the battery pack to 20V
+- Turn on the NUC
+- Plug in the Kobuki USB cable to the NUC (first)
+- Plug in the Lidar USB cable to the NUC (second)
+
+Power off
+
+- Unplug the USB cables of the Kobuki and the Lidar
+- Turn off the NUC (the battery pack will go off automatically)
+- Turn off the switch on the Kobuki base
+- Put the Kobuki on a charging station
+- If necessary, charge the external battery pack
+
 1. Run in the terminal
 
 ```
