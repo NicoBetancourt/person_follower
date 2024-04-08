@@ -17,6 +17,7 @@ from rclpy.node import Node
 
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
+from scipy.optimize import curve_fit
 
 class PersonFollower(Node):
 
@@ -40,7 +41,34 @@ class PersonFollower(Node):
             min_index = np.argmin(np_ranges)
             min_value = np.min(np_ranges)
 
-            # Calcular el error (Pos está a la izquierda/ Neg está a la derecha)
+            #################################
+            leg = np_ranges[min_index-10:min_index+10]
+            leg = leg[~np.isnan(leg) & ~np.isinf(leg)]
+
+            # Eje x correspondiente a los índices de los puntos
+            x_data = np.arange(len(leg))
+
+            # Ajuste de los puntos a la función de la circunferencia
+            popt, pcov = curve_fit(circle, x_data, leg, p0=(10, 10, 10))
+
+            # Obtener los parámetros ajustados
+            a, b, r = popt
+
+            # Calcular los puntos de la circunferencia ajustada
+            x_fit = np.linspace(x_data[0], x_data[-1], 100)
+            y_fit = circle(x_fit, a, b, r)
+
+            # Calcular el error residual del ajuste
+            residuals = leg - circle(x_data, a, b, r)
+            residual_sum = np.sum(residuals**2)
+            umbral_error = 0.3
+            is_semicircle = residual_sum < umbral_error
+
+            print(leg)
+            print('Es pierna : ' , is_semicircle)
+
+            #######################################
+            
             error_angle = target_angle - min_index
             
             # Control proporcional para ajustar las velocidades lineal y angular
@@ -55,7 +83,7 @@ class PersonFollower(Node):
                 linear_velocity  = 0.
                 angular_velocity = 0.                 
 
-            print("Ángulo:", round(min_index/3,1), "Distancia:", round(min_value, 3), "Vel Lin:", round(linear_velocity, 4), "Vel Ang:", round(angular_velocity, 4))
+            # print("Ángulo:", round(min_index/3,1), "Distancia:", round(min_value, 3), "Vel Lin:", round(linear_velocity, 4), "Vel Ang:", round(angular_velocity, 4))
 
             return linear_velocity, angular_velocity
 
@@ -64,6 +92,13 @@ class PersonFollower(Node):
 
         np_ranges = np.array(ranges)
         np_ranges = np.roll(np_ranges, margin_value)[:margin_value * 2]
+
+        #############################################
+        # Función de la circunferencia
+        def circle(x, a, b, r):
+            return np.sqrt(r**2 - (x - a)**2) + b
+        ##############################################3
+
         # np_ranges = np_ranges[target_value - margin_value:target_value + margin_value+1]
         linear_velocity, angular_velocity = follow_target(np_ranges,len(np_ranges)/2)
 
