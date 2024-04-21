@@ -37,6 +37,10 @@ class PersonFollower(Node):
         angle_increment = input_msg.angle_increment
         ranges = input_msg.ranges
 
+        # Función de parabola
+        def parabola(x, a, b, c):
+            return a * x**2 + b * x + c
+
         def follow_target(np_ranges, target_angle):
             min_index = np.argmin(np_ranges)
             min_value = np.min(np_ranges)
@@ -47,25 +51,17 @@ class PersonFollower(Node):
 
             # Eje x correspondiente a los índices de los puntos
             x_data = np.arange(len(leg))
-
+            if (x_data != []):
             # Ajuste de los puntos a la función de la circunferencia
-            popt, pcov = curve_fit(circle, x_data, leg, p0=(10, 10, 10))
+                popt, _ = curve_fit(parabola, x_data, leg)
 
-            # Obtener los parámetros ajustados
-            a, b, r = popt
+                error = np.sqrt(np.mean((leg - parabola(x_data, *popt))**2))
+                umbral_error = 0.005
+                is_semicircle = error < umbral_error
 
-            # Calcular los puntos de la circunferencia ajustada
-            x_fit = np.linspace(x_data[0], x_data[-1], 100)
-            y_fit = circle(x_fit, a, b, r)
-
-            # Calcular el error residual del ajuste
-            residuals = leg - circle(x_data, a, b, r)
-            residual_sum = np.sum(residuals**2)
-            umbral_error = 0.3
-            is_semicircle = residual_sum < umbral_error
-
-            print(leg)
-            print('Es pierna : ' , is_semicircle)
+                print('Datos reales: ',leg)
+                print('Error: ', error)
+                print('Es pierna xd: ' , is_semicircle)
 
             #######################################
             
@@ -92,12 +88,6 @@ class PersonFollower(Node):
 
         np_ranges = np.array(ranges)
         np_ranges = np.roll(np_ranges, margin_value)[:margin_value * 2]
-
-        #############################################
-        # Función de la circunferencia
-        def circle(x, a, b, r):
-            return np.sqrt(r**2 - (x - a)**2) + b
-        ##############################################3
 
         # np_ranges = np_ranges[target_value - margin_value:target_value + margin_value+1]
         linear_velocity, angular_velocity = follow_target(np_ranges,len(np_ranges)/2)
