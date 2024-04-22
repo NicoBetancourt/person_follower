@@ -59,9 +59,9 @@ class PersonFollower(Node):
                 umbral_error = 0.005
                 is_semicircle = error < umbral_error
 
-                print('Datos reales: ',leg)
-                print('Error: ', error)
-                print('Es pierna xd: ' , is_semicircle)
+                # print('Datos reales: ',leg)
+                print(f"Error({is_semicircle}): ", f"{round(error,5)}/{round(umbral_error,5)}")
+                # print('Es pierna xd: ' , is_semicircle)
 
             #######################################
             
