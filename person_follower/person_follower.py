@@ -18,6 +18,11 @@ from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
 from scipy.optimize import curve_fit
+import math 
+
+counterState = 0
+angular_velocity = 0.
+linear_velocity = 0.
 
 class PersonFollower(Node):
 
@@ -36,21 +41,46 @@ class PersonFollower(Node):
         angle_max = input_msg.angle_max
         angle_increment = input_msg.angle_increment
         ranges = input_msg.ranges
+        global counterState
+        global angular_velocity
+        global linear_velocity
 
         # Función de parabola
         def parabola(x, a, b, c):
             return a * x**2 + b * x + c
 
-        def follow_target(np_ranges, target_angle):
-            min_index = np.argmin(np_ranges)
-            min_value = np.min(np_ranges)
+        # Función de segmentación
+        def create_subarrays(data):
+            """
+            Se debe filtrar cada subarray:
+            - Por cantidad de puntos si es muy menor a determinada cantidad
+            - Si no es parabola eliminar subarray
+            """
+            subarrays = []
+            current_subarray = []
+            for item in data:
+                if not math.isinf(float(item)):
+                    current_subarray.append(float(item))
+                else:
+                    if current_subarray and len(current_subarray)> 5 and isLeg(current_subarray):
+                        subarrays.append(np.array(current_subarray))
+                        current_subarray = []
 
-            #################################
-            leg = np_ranges[min_index-10:min_index+10]
+            if current_subarray:
+                subarrays.append(np.array(current_subarray))
+            print(len(subarrays))
+            return subarrays
+
+        # Identifica pierna
+        def isLeg(np_ranges):
+            # min_index = np.argmin(np_ranges)
+            print(np_ranges)
+            leg = np_ranges#[min_index-10:min_index+10]
             leg = leg[~np.isnan(leg) & ~np.isinf(leg)]
 
             # Eje x correspondiente a los índices de los puntos
             x_data = np.arange(len(leg))
+            is_semicircle = False
             if (x_data != []):
             # Ajuste de los puntos a la función de la circunferencia
                 popt, _ = curve_fit(parabola, x_data, leg)
@@ -59,12 +89,18 @@ class PersonFollower(Node):
                 umbral_error = 0.005
                 is_semicircle = error < umbral_error
 
-                # print('Datos reales: ',leg)
                 print(f"Error({is_semicircle}): ", f"{round(error,5)}/{round(umbral_error,5)}")
-                # print('Es pierna xd: ' , is_semicircle)
 
-            #######################################
-            
+            return is_semicircle
+
+        def follow_target(np_ranges, target_angle):
+            """
+            Se podría mejorar para que solo con el valor de entrada del target_angle lo siga
+            Sin necesidad del arreglo np_ranges.
+            """
+            min_index = np.argmin(np_ranges)
+            min_value = np.min(np_ranges)
+
             error_angle = target_angle - min_index
             
             # Control proporcional para ajustar las velocidades lineal y angular
@@ -79,8 +115,6 @@ class PersonFollower(Node):
                 linear_velocity  = 0.
                 angular_velocity = 0.                 
 
-            # print("Ángulo:", round(min_index/3,1), "Distancia:", round(min_value, 3), "Vel Lin:", round(linear_velocity, 4), "Vel Ang:", round(angular_velocity, 4))
-
             return linear_velocity, angular_velocity
 
         margin_value = 30*3
@@ -88,9 +122,18 @@ class PersonFollower(Node):
 
         np_ranges = np.array(ranges)
         np_ranges = np.roll(np_ranges, margin_value)[:margin_value * 2]
+        subarrays = create_subarrays(np_ranges)
+        # isLegValue = isLeg(np_ranges)
 
-        # np_ranges = np_ranges[target_value - margin_value:target_value + margin_value+1]
-        linear_velocity, angular_velocity = follow_target(np_ranges,len(np_ranges)/2)
+        # if (isLegValue):
+        #     counterState = 0
+        #     linear_velocity, angular_velocity = follow_target(np_ranges,len(np_ranges)/2)
+        # else:
+        #     counterState += 1
+        #     if (counterState > 10):
+        #         print('Encuentra un muro')
+        #         linear_velocity  = 0.
+        #         angular_velocity = 0. 
 
         vx = linear_velocity #0.1
         wz = angular_velocity #0.1 #pos izq, neg der
