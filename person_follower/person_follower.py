@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import numpy as np
+import matplotlib.pyplot as plt
 import rclpy
 from rclpy.node import Node
 
@@ -45,6 +46,28 @@ class PersonFollower(Node):
         global angular_velocity
         global linear_velocity
 
+        def plot_subarrays(subarrays, indices, figsize=(6,6)):
+            # Crear una nueva figura
+            plt.figure(figsize=figsize)
+            
+            # Dibujar la cuadrícula polar
+            ax = plt.subplot(111, polar=True)
+            
+            # Plotear los puntos dados en coordenadas polares
+            for subarray, angle in zip(subarrays, indices):
+                print(subarray)
+                print(angle)
+                theta = np.deg2rad(angle/3)  # Convertir el ángulo a radianes
+                r = subarray  # Obtener las magnitudes
+                ax.plot(theta, r, 'ro')  # 'ro' significa círculo rojo
+            
+            ax.set_theta_direction(-1)  # Cambiar la dirección de los ángulos (opcional)
+            ax.set_theta_zero_location('N')  # Establecer la posición cero de los ángulos
+            
+            # Mostrar la imagen
+            plt.show()
+
+
         # Función de parabola
         def parabola(x, a, b, c):
             return a * x**2 + b * x + c
@@ -57,25 +80,32 @@ class PersonFollower(Node):
             - Si no es parabola eliminar subarray
             """
             subarrays = []
+            indices = []
             current_subarray = []
-            for item in data:
+            current_indices = [] 
+            for index,item in enumerate(data):
                 if not math.isinf(float(item)):
                     current_subarray.append(float(item))
+                    current_indices.append(index)
                 else:
-                    if current_subarray and len(current_subarray)> 5 and isLeg(current_subarray):
+                    if current_subarray and len(current_subarray)> 5:
                         subarrays.append(np.array(current_subarray))
+                        indices.append(current_indices)
                         current_subarray = []
+                        current_indices = []
 
             if current_subarray:
                 subarrays.append(np.array(current_subarray))
-            print(len(subarrays))
-            return subarrays
+                indices.append(current_indices)
+            print(len(subarrays),len(indices))
+
+            plot_subarrays(subarrays, indices)
+            return subarrays, indices
 
         # Identifica pierna
         def isLeg(np_ranges):
             # min_index = np.argmin(np_ranges)
-            print(np_ranges)
-            leg = np_ranges#[min_index-10:min_index+10]
+            leg = np.array(np_ranges)#[min_index-10:min_index+10]
             leg = leg[~np.isnan(leg) & ~np.isinf(leg)]
 
             # Eje x correspondiente a los índices de los puntos
@@ -121,7 +151,7 @@ class PersonFollower(Node):
         target_value = 180*3
 
         np_ranges = np.array(ranges)
-        np_ranges = np.roll(np_ranges, margin_value)[:margin_value * 2]
+        # np_ranges = np.roll(np_ranges, margin_value)[:margin_value * 2]
         subarrays = create_subarrays(np_ranges)
         # isLegValue = isLeg(np_ranges)
 
