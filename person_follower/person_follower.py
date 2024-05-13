@@ -24,6 +24,7 @@ import math
 counterState = 0
 angular_velocity = 0.
 linear_velocity = 0.
+fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
 
 class PersonFollower(Node):
 
@@ -45,27 +46,36 @@ class PersonFollower(Node):
         global counterState
         global angular_velocity
         global linear_velocity
+        global fig, ax
 
-        def plot_subarrays(subarrays, indices, figsize=(6,6)):
-            # Crear una nueva figura
-            plt.figure(figsize=figsize)
+        def plot_subarrays(subarrays, indices, ax=plt.gca()):
+            if ax is None:
+                fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+
+            ax.clear()
+            # ax = plt.subplot(111, polar=True)
             
-            # Dibujar la cuadrícula polar
-            ax = plt.subplot(111, polar=True)
+            
+            colors = plt.cm.tab10(np.linspace(0, 1, len(subarrays))) 
             
             # Plotear los puntos dados en coordenadas polares
-            for subarray, angle in zip(subarrays, indices):
-                print(subarray)
-                print(angle)
-                theta = np.deg2rad(angle/3)  # Convertir el ángulo a radianes
-                r = subarray  # Obtener las magnitudes
-                ax.plot(theta, r, 'ro')  # 'ro' significa círculo rojo
+            for i, (subarray, angle) in enumerate(zip(subarrays, indices)):
+                angle = np.array(angle)
+                r = subarray  
+                theta = np.deg2rad(angle/3)
+                # ax.plot(theta, r, markersize=2, color=colors[i])
+
+                if (isLeg(subarray)):
+                    ax.plot(theta, r, 'go', markersize=1)
+                else:
+                    ax.plot(theta, r, 'ro', markersize=1)
             
             ax.set_theta_direction(-1)  # Cambiar la dirección de los ángulos (opcional)
             ax.set_theta_zero_location('N')  # Establecer la posición cero de los ángulos
             
             # Mostrar la imagen
-            plt.show()
+            plt.draw()
+            plt.pause(0.001) 
 
 
         # Función de parabola
@@ -84,15 +94,24 @@ class PersonFollower(Node):
             current_subarray = []
             current_indices = [] 
             for index,item in enumerate(data):
+                print('Sub array: ',current_subarray)
                 if not math.isinf(float(item)):
+                    if current_subarray and abs(item - current_subarray[-1]) > 1:
+                        if len(current_subarray) >= 3:
+                            subarrays.append(np.array(current_subarray))
+                            indices.append(current_indices)
+                        current_subarray = []
+                        current_indices = []
+                    
+                    # Agregar el nuevo elemento al subarray actual
                     current_subarray.append(float(item))
                     current_indices.append(index)
                 else:
-                    if current_subarray and len(current_subarray)> 5:
+                    if len(current_subarray) >= 3:
                         subarrays.append(np.array(current_subarray))
                         indices.append(current_indices)
-                        current_subarray = []
-                        current_indices = []
+                    current_subarray = []
+                    current_indices = []
 
             if current_subarray:
                 subarrays.append(np.array(current_subarray))
@@ -117,7 +136,7 @@ class PersonFollower(Node):
 
                 error = np.sqrt(np.mean((leg - parabola(x_data, *popt))**2))
                 umbral_error = 0.005
-                is_semicircle = error < umbral_error
+                is_semicircle = error < umbral_error or len(np_ranges) < 5
 
                 print(f"Error({is_semicircle}): ", f"{round(error,5)}/{round(umbral_error,5)}")
 
